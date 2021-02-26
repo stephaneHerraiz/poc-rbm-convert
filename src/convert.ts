@@ -144,7 +144,7 @@ class Rbm {
     }
 
 
-    public async open (file: string): Promise<any> {
+    public async open (file: string): Promise<void> {
         return new Promise( async (resolve, reject) => {
             const rbm: Buffer = await fs.promises.readFile(file);
             if (!this.isFileValid(rbm)) {
@@ -165,7 +165,7 @@ class Rbm {
                 p = p + section.length + SECTION_BASE_LENGTH;
             }
 
-            resolve();
+            return resolve();
         });
     }
 
@@ -271,10 +271,12 @@ class Rbm {
             this.transformation.matrice = data;
 
         } else if (section.type === 11) {
-            for (let i = 0; i <= data.readUInt16LE(0); i++) {
-                const point = new Point()
-                point.x = data.readDoubleLE(2 + (i * 16) );
-                point.y = data.readDoubleLE(2 + (i * 16 * 2) );
+            for (let i = 0; i < data.readUInt16LE(0); i++) {
+                const point = new Point();
+                let index = 2 + (i * 2 * 8)
+                point.x = data.readDoubleLE(index);
+                index += 8;
+                point.y = data.readDoubleLE(index);
                 this.mask.points.push(point);
             }
             
@@ -446,7 +448,9 @@ class Rbm {
 
 const start = async () => {
     const rbm = new Rbm();
-    await rbm.open(`./test/rdc_withbase.rbm`);
+    const path = `./test/test2/R+4_2401/file.rbm`;
+    process.stdout.write(`read ${path} file...\n`);
+    await rbm.open(path);
     const paths: Segment[][] = [];
     const lines = [];
     const segmentslength = rbm.vertices.segments.length
